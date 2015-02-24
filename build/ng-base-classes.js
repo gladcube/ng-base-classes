@@ -652,8 +652,9 @@
     }
   ]);
   app.factory("Resource", [
-    "$http", "AppModel", "DataStorage", function($http, AppModel, DataStorage){
-      var Resource;
+    "connection", "AppModel", "DataStorage", "utility-functions", function(connection, AppModel, DataStorage, _){
+      var propsToStr, Resource;
+      propsToStr = _.propsToStr;
       return Resource = (function(superclass){
         var src_and_params_from, prototype = extend$((import$(Resource, superclass).displayName = 'Resource', Resource), superclass).prototype, constructor = Resource;
         src_and_params_from = function(src, params, subject){
@@ -715,12 +716,14 @@
           this.params_for_fetch())) {
             this.params_for_fetch().push(params);
             ref$ = src_and_params_from(this.src(), params), src = ref$.src, query_params = ref$.params;
-            return $http.get(src, {
+            return connection.get(src, {
               params: query_params
             }).then(function(it){
               var instances;
-              this$.fetched_bools()[params.props_str()] = true;
-              instances = this$.instance_groups()[params.props_str()] = new DataStorage(map(function(it){
+              this$.fetched_bools()[propsToStr(
+              params)] = true;
+              instances = this$.instance_groups()[propsToStr(
+              params)] = new DataStorage(map(function(it){
                 return this$['new'](it);
               })(
               it.data));
@@ -744,7 +747,8 @@
         Resource.instance_group = function(params){
           var that, str;
           params == null && (params = {});
-          if ((that = this.instance_groups()[str = params.props_str()]) != null) {
+          if ((that = this.instance_groups()[str = propsToStr(
+          params)]) != null) {
             return that;
           } else {
             return this.instance_groups()[str] = new DataStorage;
@@ -790,21 +794,38 @@
           parts[1]));
           return this.instance_group(group_params).find_all(params);
         };
-        Resource.add = function(instance, params){
-          var data;
-          params == null && (params = {});
-          (data = this.instance_group(params)).add(instance);
-          return data.reidentify();
+        Resource.add = function(instance){
+          var groups;
+          return each(function(it){
+            groups[it].add(instance);
+            return groups[it].reidentify();
+          })(
+          filter(function(it){
+            return propsMatch(strToProps(
+            it))(
+            instance);
+          })(
+          keys(
+          groups = this.instance_groups())));
         };
-        Resource.remove = function(instance, params){
-          var data;
-          params == null && (params = {});
-          (data = this.instance_group(params)).remove(instance);
-          return data.reidentify();
+        Resource.remove = function(instance){
+          var groups;
+          return each(function(it){
+            groups[it].remove(instance);
+            return groups[it].reidentify();
+          })(
+          filter(function(it){
+            return propsMatch(strToProps(
+            it))(
+            instance);
+          })(
+          keys(
+          groups = this.instance_groups())));
         };
         Resource.is_fetched = function(params){
           params == null && (params = {});
-          return this.fetched_bools()[params.props_str()];
+          return this.fetched_bools()[propsToStr(
+          params)];
         };
         Resource['new'] = function(){
           var x$, instance;
@@ -821,7 +842,7 @@
         prototype.persist = function(success_cb, error_cb){
           var this$ = this;
           this.fire_cbs_of("before", "persistence");
-          return $http.post(this.src(), this.data()).success(function(res){
+          return connection.post(this.src(), this.data()).success(function(res){
             import$(this$, res);
             this$.participate();
             this$.fire_cbs_of("after", "persistence");
@@ -834,7 +855,7 @@
           var this$ = this;
           this.fire_cbs_of("before", "update");
           if (this.is_dirty()) {
-            return $http.put(this.src(), this.data()).success(function(res){
+            return connection.put(this.src(), this.data()).success(function(res){
               this$.fire_cbs_of("after", "update");
               return typeof success_cb == 'function' ? success_cb(res) : void 8;
             }).error(function(it){
@@ -848,7 +869,7 @@
         prototype['delete'] = function(success_cb, error_cb){
           var this$ = this;
           this.fire_cbs_of("before", "delete");
-          return $http['delete'](this.src()).success(function(res){
+          return connection['delete'](this.src()).success(function(res){
             this$.secede();
             this$.fire_cbs_of("after", "delete");
             return typeof success_cb == 'function' ? success_cb(res) : void 8;
@@ -861,6 +882,11 @@
         }
         return Resource;
       }(AppModel));
+    }
+  ]);
+  app.factory("connection", [
+    "$http", function($http){
+      return $http;
     }
   ]);
   app.factory("grouper", [
@@ -993,6 +1019,245 @@
     };
     return memorizer;
   }]);
+  app.constant("utility-functions", {
+    isA: curry$(function(type, obj){
+      return isType(capitalize(
+      camelize(
+      type)))(
+      obj);
+    }),
+    isAn: curry$(function(type, obj){
+      return isType(capitalize(
+      camelize(
+      type)))(
+      obj);
+    }),
+    have: curry$(function(obj, xs){
+      return xs.indexOf(obj) > -1;
+    }),
+    sumBy: curry$(function(f, xs){
+      return sum(
+      map(f)(
+      xs));
+    }),
+    prevOf: curry$(function(obj, xs){
+      var index;
+      if ((index = xs.indexOf(obj)) > -1) {
+        return xs[index - 1];
+      }
+    }),
+    nextOf: curry$(function(obj, xs){
+      var index;
+      if ((index = xs.indexOf(obj)) > -1) {
+        return xs[index + 1];
+      }
+    }),
+    havePrevOf: curry$(function(obj, xs){
+      return xs.indexOf(obj) > 1;
+    }),
+    haveNextOf: curry$(function(obj, xs){
+      var ref$;
+      return -1 < (ref$ = xs.indexOf(obj)) && ref$ < xs.length;
+    }),
+    add: curry$(function(obj, xs){
+      xs.push(obj);
+      return xs;
+    }),
+    remove: curry$(function(obj, xs){
+      var index;
+      if ((index = xs.indexOf(obj)) > -1) {
+        return xs.splice(index, 1);
+      }
+    }),
+    count: function(xs){
+      return xs.length;
+    },
+    isSameContentsWith: curry$(function(xs, ys){
+      return all(function(it){
+        return in$(it, ys);
+      })(
+      xs) && all(function(it){
+        return in$(it, xs);
+      })(
+      ys);
+    }),
+    unpack: function(xs){
+      var rs;
+      rs = [];
+      each(function(it){
+        return each(function(it){
+          return rs.push(it);
+        })(
+        it);
+      })(
+      xs);
+      return rs;
+    },
+    multiplyWith: curry$(function(ys, xs){
+      return unpack(
+      map(function(x){
+        return map(function(y){
+          return [x, y];
+        })(
+        ys);
+      })(
+      xs));
+    }),
+    splitWith: curry$(function(x, xs){
+      return splitAt(xs.indexOf(x))(
+      xs);
+    }),
+    pure: function(x){
+      return [x];
+    },
+    unpure: function(xs){
+      return xs[0];
+    },
+    ownKeys: function(subject){
+      return filter(function(it){
+        return subject.hasOwnProperty(it);
+      })(
+      keys(
+      subject));
+    },
+    ownValues: function(subject){
+      return map(function(it){
+        return subject[it];
+      })(
+      ownKeys(
+      subject));
+    },
+    identify: function(){
+      var count;
+      count = 0;
+      return function(obj){
+        if (obj.id == null) {
+          Object.defineProperty(obj, "id", {
+            enumerable: false,
+            configurable: true,
+            value: count++
+          });
+        }
+        return obj;
+      };
+    }(),
+    reidentify: function(obj){
+      delete obj.id;
+      return identify(
+      obj);
+    },
+    equals: curry$(function(obj, sub){
+      return angular.equals(sub, obj);
+    }),
+    define: Object.defineProperty,
+    unenumerate: curry$(function(prop, obj){
+      return define(obj, prop, {
+        enumerable: false,
+        configurable: true,
+        writable: true
+      });
+    }),
+    propsToStr: function(obj){
+      return join("&")(
+      map(function(it){
+        return it + "=" + obj[it];
+      })(
+      sort(
+      keys(
+      obj))));
+    },
+    strToProps: function(str){
+      return pairsToObj(
+      map(function(it){
+        return split("=")(
+        it);
+      })(
+      split("&")(
+      str)));
+    },
+    propsMatch: curry$(function(x, y){
+      return all(function(it){
+        return x[it] == y[it];
+      })(
+      keys(
+      x));
+    }),
+    underscorize: function(str){
+      return replace(/-/, "_")(
+      dasherize(
+      str));
+    },
+    replace: curry$(function(old, new_str, str){
+      return str.replace(old, new_str);
+    }),
+    unimplemented: function(){
+      var caller_names;
+      caller_names = [];
+      return function(){
+        var name;
+        if (!in$(name = traces()[2], caller_names)) {
+          caller_names.push(name);
+          return console.warn(name + " is unimplemented.");
+        }
+      };
+    }(),
+    traceStr: function(){
+      var obj;
+      Error.captureStackTrace(obj = {}, traceStr);
+      return obj.stack;
+    },
+    traces: function(){
+      return map(function(it){
+        return it.match(/at\s+(\S+)/)[1];
+      })(
+      tail(
+      traceStr().split("\n")));
+    },
+    arrayify: function(it){
+      return [].slice.call(it);
+    },
+    matchToAny: curry$(function(searched_strs, word){
+      return any(function(it){
+        return it != null ? it.match(word) : void 8;
+      })(
+      searched_strs);
+    }),
+    nonEmpty: function(it){
+      return !empty(it);
+    },
+    now: function(){
+      return new Date();
+    },
+    bindingImport: curry$(function(src, obj){
+      var key;
+      for (key in src) {
+        if (src.hasOwnProperty(key)) {
+          obj[key] = src[key];
+        }
+      }
+      return obj;
+    }),
+    identity: function(obj){
+      switch (false) {
+      case !(isAn("object")(
+      obj) || isAn("array")(
+      obj)):
+        return obj.name || (typeof obj.name == 'function' ? obj.name() : void 8) || obj.id || obj.id || identify(
+        obj).id;
+      default:
+        return obj;
+      }
+    },
+    roundPrecision: curry$(function(precision, number){
+      var point;
+      return round(
+      number * (point = pow(10)(
+      precision))) / point;
+    }),
+    startsWith: function(s, str){
+      return str.slice(0, s.length) === s;
+    }
+  });
   function extend$(sub, sup){
     function fun(){} fun.prototype = (sub.superclass = sup).prototype;
     (sub.prototype = new fun).constructor = sub;
@@ -1011,5 +1276,18 @@
     var i = -1, l = xs.length >>> 0;
     while (++i < l) if (x === xs[i]) return true;
     return false;
+  }
+  function curry$(f, bound){
+    var context,
+    _curry = function(args) {
+      return f.length > 1 ? function(){
+        var params = args ? args.concat() : [];
+        context = bound ? context || this : this;
+        return params.push.apply(params, arguments) <
+            f.length && arguments.length ?
+          _curry.call(context, params) : f.apply(context, params);
+      } : f;
+    };
+    return _curry();
   }
 }).call(this);

@@ -1,4 +1,5 @@
-app.factory "Resource", ["$http", "AppModel", "DataStorage", ($http, AppModel, DataStorage)->
+app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-functions", (connection, AppModel, DataStorage, _)->
+  {props-to-str} = _
   class Resource extends AppModel
     # Private Methods
     src_and_params_from = (src, params, subject)->
@@ -17,15 +18,15 @@ app.factory "Resource", ["$http", "AppModel", "DataStorage", ($http, AppModel, D
       if @params_for_fetch! |> all (-> not it `equals` params)
         @params_for_fetch!.push params
         {src, params: query_params} = src_and_params_from @src!, params
-        $http.get(src, params: query_params).then ~>
-          @fetched_bools![params.props_str!] = yes
-          instances = @instance_groups!.[params.props_str!] = new DataStorage (it.data |> map ~> @new it)
+        connection.get(src, params: query_params).then ~>
+          @fetched_bools![params |> props-to-str] = yes
+          instances = @instance_groups!.[params |> props-to-str] = new DataStorage (it.data |> map ~> @new it)
           @fire_cbs_of "after", "fetch"
     @fire_cbs_of = (timing, action)->
       [@] ++ @superclasses til: "Model"
       |> each ~> @cbs.{}[it.name].{}[timing].[][action] |> each ~> it.call @
     @instance_group = (params = {})->
-      if @instance_groups![str = params.props_str!]? then that
+      if @instance_groups![str = params |> props-to-str]? then that
       else @instance_groups![str] = new DataStorage
     @find = (params = {})->
       parts = params |> keys |> partition (~> it in @param_keys_for_fetch!)
@@ -37,9 +38,15 @@ app.factory "Resource", ["$http", "AppModel", "DataStorage", ($http, AppModel, D
       group_params = parts.0 |> map (-> [it, params[it]]) |> pairs-to-obj
       params = parts.1 |> map (-> [it, params[it]]) |> pairs-to-obj
       @instance_group(group_params).find_all params
-    @add = (instance, params = {})-> (data = @instance_group(params)).add instance; data.reidentify!
-    @remove = (instance, params = {})-> (data = @instance_group(params)).remove instance; data.reidentify!
-    @is_fetched = (params = {})-> @fetched_bools![params.props_str!]
+    @add = (instance)->
+      (groups = @instance_groups!)
+      |> keys |> filter (-> instance |> props-match (it |> str-to-props))
+      |> each -> groups.(it).add instance; groups.(it).reidentify!
+    @remove = (instance)->
+      (groups = @instance_groups!)
+      |> keys |> filter (-> instance |> props-match (it |> str-to-props))
+      |> each -> groups.(it).remove instance; groups.(it).reidentify!
+    @is_fetched = (params = {})-> @fetched_bools![params |> props-to-str]
     @new = ->
       instance = super ...
        ..fire_cbs_of "after", "new"
@@ -50,7 +57,7 @@ app.factory "Resource", ["$http", "AppModel", "DataStorage", ($http, AppModel, D
     src: -> @_src ?= (src_and_params_from @class!.src!, {}, @ .src)
     persist: (success_cb, error_cb)->
       @fire_cbs_of "before", "persistence"
-      $http.post(@src!, @data!).success (res)~>
+      connection.post(@src!, @data!).success (res)~>
         @ <<< res
         @participate!
         @fire_cbs_of "after", "persistence"
@@ -59,16 +66,17 @@ app.factory "Resource", ["$http", "AppModel", "DataStorage", ($http, AppModel, D
     update: (success_cb, error_cb)->
       @fire_cbs_of "before", "update"
       if @is_dirty!
-        $http.put(@src!, @data!).success (res)~>
+        connection.put(@src!, @data!).success (res)~>
           @fire_cbs_of "after", "update"
           success_cb? res
         .error -> error_cb? it
       else @fire_cbs_of "after", "update"; cb?!
     delete: (success_cb, error_cb)->
       @fire_cbs_of "before", "delete"
-      $http.delete(@src!).success (res)~>
+      connection.delete(@src!).success (res)~>
         @secede!
         @fire_cbs_of "after", "delete"
         success_cb? res
       .error -> error_cb? it
 ]
+
