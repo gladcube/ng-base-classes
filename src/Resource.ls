@@ -18,10 +18,11 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
       if @params_for_fetch! |> all (-> not it `equals` params)
         @params_for_fetch!.push params
         {src, params: query_params} = src_and_params_from @src!, params
-        connection.get(src, params: query_params).then ~>
+        connection.get(src, params: query_params, (res)~>
           @fetched_bools![params |> props-to-str] = yes
-          instances = @instance_groups!.[params |> props-to-str] = new DataStorage (it.data |> map ~> @new it)
+          instances = @instance_groups!.[params |> props-to-str] = new DataStorage (res.data |> map ~> @new it)
           @fire_cbs_of "after", "fetch"
+        )
     @fire_cbs_of = (timing, action)->
       [@] ++ @superclasses til: "Model"
       |> each ~> @cbs.{}[it.name].{}[timing].[][action] |> each ~> it.call @
@@ -57,26 +58,28 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
     src: -> @_src ?= (src_and_params_from @class!.src!, {}, @ .src)
     persist: (success_cb, error_cb)->
       @fire_cbs_of "before", "persistence"
-      connection.post(@src!, @data!).success (res)~>
-        @ <<< res
+      connection.post(@src!, @data!, (res)~>
+        @ <<< res.data
         @participate!
         @fire_cbs_of "after", "persistence"
-        success_cb? res
-      .error -> error_cb? it
+        if res.is_ok then success_cb? res else error_cb? res
+      )
     update: (success_cb, error_cb)->
       @fire_cbs_of "before", "update"
       if @is_dirty!
-        connection.put(@src!, @data!).success (res)~>
+        connection.put(@src!, @data!, (res)~>
           @fire_cbs_of "after", "update"
-          success_cb? res
-        .error -> error_cb? it
+          console.log res
+          if res.is_ok then success_cb? res else error_cb? res
+        )
       else @fire_cbs_of "after", "update"; cb?!
     delete: (success_cb, error_cb)->
       @fire_cbs_of "before", "delete"
-      connection.delete(@src!).success (res)~>
+      connection.delete(@src!, (res)~>
         @secede!
         @fire_cbs_of "after", "delete"
-        success_cb? res
-      .error -> error_cb? it
+        console.log res
+        if res.is_ok then success_cb? res else error_cb? res
+      )
 ]
 

@@ -7,3 +7,13 @@ module.exports = (gulp, plugins)->
       "uglify"
       "copy"
       cb
+
+  gulp.task "compile:a-fujiwara", (cb)->
+    plugins.sequence do
+      "clean"
+      "concat"
+      "livescript"
+      "uglify"
+      "copy"
+      "copy:a-fujiwara"
+      cb

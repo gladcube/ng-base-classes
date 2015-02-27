@@ -1,0 +1,1 @@
+app.constant "sailsSocket", io?.socket
