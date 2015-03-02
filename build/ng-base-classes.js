@@ -1,5 +1,5 @@
 (function(){
-  var app, slice$ = [].slice;
+  var app, ConnectionProvider, slice$ = [].slice;
   app = angular.module("ng-base-classes", []);
   app.factory("AppModel", [
     "Model", function(Model){
@@ -718,7 +718,7 @@
             ref$ = src_and_params_from(this.src(), params), src = ref$.src, query_params = ref$.params;
             return connection.get(src, {
               params: query_params
-            }).then(function(it){
+            }, function(res){
               var instances;
               this$.fetched_bools()[propsToStr(
               params)] = true;
@@ -726,7 +726,7 @@
               params)] = new DataStorage(map(function(it){
                 return this$['new'](it);
               })(
-              it.data));
+              res.data));
               return this$.fire_cbs_of("after", "fetch");
             });
           }
@@ -842,24 +842,28 @@
         prototype.persist = function(success_cb, error_cb){
           var this$ = this;
           this.fire_cbs_of("before", "persistence");
-          return connection.post(this.src(), this.data()).success(function(res){
-            import$(this$, res);
+          return connection.post(this.src(), this.data(), function(res){
+            import$(this$, res.data);
             this$.participate();
             this$.fire_cbs_of("after", "persistence");
-            return typeof success_cb == 'function' ? success_cb(res) : void 8;
-          }).error(function(it){
-            return typeof error_cb == 'function' ? error_cb(it) : void 8;
+            if (res.is_ok) {
+              return typeof success_cb == 'function' ? success_cb(res) : void 8;
+            } else {
+              return typeof error_cb == 'function' ? error_cb(res) : void 8;
+            }
           });
         };
         prototype.update = function(success_cb, error_cb){
           var this$ = this;
           this.fire_cbs_of("before", "update");
           if (this.is_dirty()) {
-            return connection.put(this.src(), this.data()).success(function(res){
+            return connection.put(this.src(), this.data(), function(res){
               this$.fire_cbs_of("after", "update");
-              return typeof success_cb == 'function' ? success_cb(res) : void 8;
-            }).error(function(it){
-              return typeof error_cb == 'function' ? error_cb(it) : void 8;
+              if (res.is_ok) {
+                return typeof success_cb == 'function' ? success_cb(res) : void 8;
+              } else {
+                return typeof error_cb == 'function' ? error_cb(res) : void 8;
+              }
             });
           } else {
             this.fire_cbs_of("after", "update");
@@ -869,12 +873,14 @@
         prototype['delete'] = function(success_cb, error_cb){
           var this$ = this;
           this.fire_cbs_of("before", "delete");
-          return connection['delete'](this.src()).success(function(res){
+          return connection['delete'](this.src(), function(res){
             this$.secede();
             this$.fire_cbs_of("after", "delete");
-            return typeof success_cb == 'function' ? success_cb(res) : void 8;
-          }).error(function(it){
-            return typeof error_cb == 'function' ? error_cb(it) : void 8;
+            if (res.is_ok) {
+              return typeof success_cb == 'function' ? success_cb(res) : void 8;
+            } else {
+              return typeof error_cb == 'function' ? error_cb(res) : void 8;
+            }
           });
         };
         function Resource(){
@@ -884,11 +890,75 @@
       }(AppModel));
     }
   ]);
-  app.factory("connection", [
-    "$http", function($http){
-      return $http;
-    }
-  ]);
+  app.provider("connection", ConnectionProvider = (function(){
+    ConnectionProvider.displayName = 'ConnectionProvider';
+    var prototype = ConnectionProvider.prototype, constructor = ConnectionProvider;
+    prototype.type = "$http";
+    prototype.$get = [
+      "$http", "$rootScope", "sailsSocket", function($http, $rootScope, sailsSocket){
+        switch (this.type) {
+        case "$http":
+          return {
+            get: function(url, options, cb){
+              if (isA("function")(
+              arguments[1])) {
+                url = arguments[0], cb = arguments[1];
+                options = {};
+              }
+              return $http.get(url, options).then(function(it){
+                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+              });
+            },
+            post: function(url, data, cb){
+              return $http.post(url, data).then(function(it){
+                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+              });
+            },
+            put: function(url, data, cb){
+              return $http.put(url, data).then(function(it){
+                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+              });
+            },
+            'delete': function(url, cb){
+              return $http['delete'](url).then(function(it){
+                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+              });
+            }
+          };
+        case "sailsSocket":
+          return {
+            get: function(url, options, cb){
+              if (isA("function")(
+              arguments[1])) {
+                url = arguments[0], cb = arguments[1];
+                options = {};
+              }
+              return sailsSocket.get(url, options.params, function(data, res){
+                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+              });
+            },
+            post: function(url, data, cb){
+              return sailsSocket.post(url, data, function(data, res){
+                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+              });
+            },
+            put: function(url, data, cb){
+              return sailsSocket.put(url, data, function(data, res){
+                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+              });
+            },
+            'delete': function(url, cb){
+              return sailsSocket['delete'](url, function(data, res){
+                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+              });
+            }
+          };
+        }
+      }
+    ];
+    function ConnectionProvider(){}
+    return ConnectionProvider;
+  }()));
   app.factory("grouper", [
     "memorizer", "$rootScope", function(memorizer, $rootScope){
       var grouper;
@@ -1019,6 +1089,7 @@
     };
     return memorizer;
   }]);
+  app.constant("sailsSocket", typeof io != 'undefined' && io !== null ? io.socket : void 8);
   app.constant("utility-functions", {
     isA: curry$(function(type, obj){
       return isType(capitalize(
