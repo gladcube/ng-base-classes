@@ -863,7 +863,7 @@
             });
           } else {
             this.fire_cbs_of("after", "update");
-            return typeof cb == 'function' ? cb() : void 8;
+            return typeof success_cb == 'function' ? success_cb() : void 8;
           }
         };
         prototype['delete'] = function(success_cb, error_cb){
