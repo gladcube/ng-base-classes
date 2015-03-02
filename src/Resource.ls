@@ -69,16 +69,14 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
       if @is_dirty!
         connection.put(@src!, @data!, (res)~>
           @fire_cbs_of "after", "update"
-          console.log res
           if res.is_ok then success_cb? res else error_cb? res
         )
-      else @fire_cbs_of "after", "update"; cb?!
+      else @fire_cbs_of "after", "update"; success_cb?!
     delete: (success_cb, error_cb)->
       @fire_cbs_of "before", "delete"
       connection.delete(@src!, (res)~>
         @secede!
         @fire_cbs_of "after", "delete"
-        console.log res
         if res.is_ok then success_cb? res else error_cb? res
       )
 ]

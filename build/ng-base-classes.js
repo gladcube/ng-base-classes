@@ -859,7 +859,6 @@
           if (this.is_dirty()) {
             return connection.put(this.src(), this.data(), function(res){
               this$.fire_cbs_of("after", "update");
-              console.log(res);
               if (res.is_ok) {
                 return typeof success_cb == 'function' ? success_cb(res) : void 8;
               } else {
@@ -868,7 +867,7 @@
             });
           } else {
             this.fire_cbs_of("after", "update");
-            return typeof cb == 'function' ? cb() : void 8;
+            return typeof success_cb == 'function' ? success_cb() : void 8;
           }
         };
         prototype['delete'] = function(success_cb, error_cb){
@@ -877,7 +876,6 @@
           return connection['delete'](this.src(), function(res){
             this$.secede();
             this$.fire_cbs_of("after", "delete");
-            console.log(res);
             if (res.is_ok) {
               return typeof success_cb == 'function' ? success_cb(res) : void 8;
             } else {
