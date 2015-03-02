@@ -70,7 +70,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
           @fire_cbs_of "after", "update"
           success_cb? res
         .error -> error_cb? it
-      else @fire_cbs_of "after", "update"; cb?!
+      else @fire_cbs_of "after", "update"; success_cb?!
     delete: (success_cb, error_cb)->
       @fire_cbs_of "before", "delete"
       connection.delete(@src!).success (res)~>
