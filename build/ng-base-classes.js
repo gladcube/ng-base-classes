@@ -1245,6 +1245,14 @@
       keys(
       x));
     }),
+    except: curry$(function(key, obj){
+      return pairsToObj(
+      reject(function(it){
+        return it[0] === key;
+      })(
+      objToPairs(
+      obj)));
+    }),
     underscorize: function(str){
       return replace(/-/, "_")(
       dasherize(
