@@ -658,11 +658,13 @@
       return Resource = (function(superclass){
         var src_and_params_from, prototype = extend$((import$(Resource, superclass).displayName = 'Resource', Resource), superclass).prototype, constructor = Resource;
         src_and_params_from = function(src, params, subject){
-          var required_keys;
-          required_keys = map(function(it){
-            return it.slice(1);
-          })(
-          src.match(/:[^/]+/g));
+          var required_keys, that;
+          required_keys = (that = src.match(/:[^/]+/g))
+            ? map(function(it){
+              return it.slice(1);
+            })(
+            that)
+            : [];
           return {
             src: src.replace(/:([^/]+)/g, function(){
               return params[arguments[1]] || (subject != null ? subject[arguments[1]] : void 8) || "";
@@ -1229,22 +1231,12 @@
       });
     }),
     propsToStr: function(obj){
-      return join("&")(
-      map(function(it){
-        return it + "=" + obj[it];
-      })(
-      sort(
-      keys(
-      obj))));
+      return JSON.stringify(
+      obj);
     },
     strToProps: function(str){
-      return pairsToObj(
-      map(function(it){
-        return split("=")(
-        it);
-      })(
-      split("&")(
-      str)));
+      return JSON.parse(
+      str);
     },
     propsMatch: curry$(function(x, y){
       return all(function(it){

@@ -34,8 +34,8 @@ app.constant("utility-functions",
   equals: (obj, sub)--> angular.equals sub, obj
   define: Object.define-property
   unenumerate: (prop, obj)--> define obj, prop, enumerable: no, configurable: yes, writable: yes
-  props-to-str: (obj)-> obj |> keys |> sort |> map (-> "#{it}=#{obj[it]}") |> join "&"
-  str-to-props: (str)-> str |> split "&" |> map (-> it |> split "=") |> pairs-to-obj
+  props-to-str: (obj)-> obj |> JSON.stringify
+  str-to-props: (str)-> str |> JSON.parse
   props-match: (x, y)--> x |> keys |> all -> x.(it) ~= y.(it)
 
   # String

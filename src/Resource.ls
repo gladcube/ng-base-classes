@@ -3,7 +3,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
   class Resource extends AppModel
     # Private Methods
     src_and_params_from = (src, params, subject)->
-      required_keys = src.match /:[^/]+/g |> map ( .slice 1)
+      required_keys = if src.match /:[^/]+/g then that |> map ( .slice 1) else []
       # , ~> params[&1] or @[&1] or ""
       src: src.replace /:([^/]+)/g, -> params[&1] or subject?[&1] or ""
       params: params |> keys |> reject ( in required_keys) |> map (-> [it, params[it]]) |> pairs-to-obj
