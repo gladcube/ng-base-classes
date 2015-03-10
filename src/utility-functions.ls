@@ -37,6 +37,7 @@ app.constant("utility-functions",
   props-to-str: (obj)-> obj |> JSON.stringify
   str-to-props: (str)-> str |> JSON.parse
   props-match: (x, y)--> x |> keys |> all -> x.(it) ~= y.(it)
+  except: (key, obj)--> obj |> obj-to-pairs |> reject ( .0 is key) |> pairs-to-obj
 
   # String
   underscorize: (str)-> str |> dasherize |> replace /-/, "_"
