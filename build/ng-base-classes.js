@@ -967,60 +967,56 @@
       grouper = function(){};
       window.grouper = grouper;
       grouper.elm_in = function(arr, arg$){
-        var params, requirements, param_pairs, dividers, key, ref$;
+        var params, requirements, ref$;
         params = arg$.where, requirements = arg$['with'];
         if (params == null) {
           return arr[0];
         }
-        param_pairs = sortBy(function(it){
-          return it[0];
-        })(
-        objToPairs(
-        params));
-        dividers = map(function(it){
-          return it[0];
-        })(
-        param_pairs);
-        key = join("-")(
-        map(function(it){
-          return it[1];
-        })(
-        param_pairs));
         return (ref$ = this.groups_of(arr, {
-          by: dividers,
+          by: keys(
+          params),
           'with': requirements
         })[key]) != null ? ref$[0] : void 8;
       };
       grouper.group_in = function(arr, arg$){
-        var params, requirements, param_pairs, dividers, key, ref$;
+        var params, requirements, groups, key$;
         params = arg$.where, requirements = arg$['with'];
         if (params == null) {
           return arr;
         }
-        param_pairs = sortBy(function(it){
-          return it[0];
-        })(
-        objToPairs(
-        params));
-        dividers = map(function(it){
-          return it[0];
-        })(
-        param_pairs);
-        key = join("-")(
-        map(function(it){
-          return it[1];
-        })(
-        param_pairs));
-        return (ref$ = this.groups_of(arr, {
-          by: dividers,
+        groups = this.groups_of(arr, {
+          by: keys(
+          params),
           'with': requirements
-        }))[key] || (ref$[key] = []);
+        });
+        if (any(function(it){
+          return isAn("array")(
+          it);
+        })(
+        values(
+        params))) {
+          groups[key$ = propsToStr(
+          params)] == null && (groups[key$] = filter(function(elm){
+            return all(function(it){
+              switch (isAn("array")(
+              params[it])) {
+              case true:
+                return in$(elm[it], params[it]);
+              case false:
+                return elm[it] == params[it];
+              }
+            })(
+            keys(
+            params));
+          })(
+          arr));
+        }
+        return groups[key$ = propsToStr(
+        params)] || (groups[key$] = []);
       };
       grouper.groups_of = function(arr, arg$){
         var dividers, requirements, that, reminders;
         dividers = arg$.by, requirements = arg$['with'];
-        dividers = sort(
-        dividers);
         if ((that = memorizer.memoried_("groups", {
           'with': reminders = [arr].concat(dividers),
           'in': this
@@ -1028,13 +1024,16 @@
           return that;
         } else {
           return memorizer.memorize(groupBy(function(elm){
-            return join("-")(
+            return propsToStr(
+            pairsToObj(
             map(function(it){
-              return $rootScope.$eval("it." + it, {
-                it: import$(elm, requirements)
-              });
+              return [
+                it, $rootScope.$eval("it." + it, {
+                  it: import$(elm, requirements)
+                })
+              ];
             })(
-            dividers));
+            dividers)));
           })(
           arr), {
             as: "groups",

@@ -6,21 +6,27 @@ app.factory "grouper", ["memorizer", "$rootScope", (memorizer, $rootScope)->
   grouper <<<
     elm_in: (arr, {where: params, with: requirements})->
       if not params? then return arr.0
-      param_pairs = params |> obj-to-pairs |> sort-by ( .0)
-      dividers = param_pairs |> map ( .0)
-      key = param_pairs |> map ( .1) |> join "-"
-      @groups_of(arr, by: dividers, with: requirements)[key]?.0
+      @groups_of(arr, by: (params |> keys), with: requirements)[key]?.0
     group_in: (arr, {where: params, with: requirements})->
       if not params? then return arr
-      param_pairs = params |> obj-to-pairs |> sort-by ( .0)
-      dividers = param_pairs |> map ( .0)
-      key = param_pairs |> map ( .1) |> join "-"
-      @groups_of(arr, by: dividers, with: requirements)[][key]
+      groups = @groups_of arr, by: (params |> keys), with: requirements
+      if params |> values |> any (-> it |> is-an "array") # パラメータに配列指定の場合
+        groups[params |> props-to-str] ?= 
+          arr |> filter (elm)-> 
+            params |> keys |> all ->
+              switch (params.(it) |> is-an "array")
+              | yes => elm.(it) in params.(it)
+              | no => elm.(it) ~= params.(it)
+      groups[][params |> props-to-str]
     groups_of: (arr, {by: dividers, with: requirements})->
-      dividers = dividers |> sort
       if memorizer.memoried_("groups", with: (reminders = [arr] ++ dividers), in: @)? then that
       else memorizer.memorize (
-        arr |> group-by (elm)-> dividers |> map (-> $rootScope.$eval "it.#{it}", (it: elm <<< requirements) ) |> join "-"
+        arr
+        |> group-by (elm)->
+          dividers
+          |> map -> [it, $rootScope.$eval "it.#{it}", (it: elm <<< requirements)]
+          |> pairs-to-obj
+          |> props-to-str
       ), as: "groups", with: reminders, in: @
 
   return grouper
