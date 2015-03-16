@@ -17,7 +17,7 @@ app.constant("utility-functions",
     rs = []
     xs |> each -> it |> each -> rs.push it
     return rs
-  multiply-with: (ys, xs)--> xs |> map ((x)-> ys |> map (y)-> [x, y]) |> unpack
+  multiply-with: (xs, ys)--> xs |> map ((x)-> ys |> map (y)-> [x, y]) |> unpack
   split-with: (x, xs)--> xs |> split-at xs.index-of x
   pure: (x)-> [x]
   unpure: (xs)-> xs.0

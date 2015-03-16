@@ -967,19 +967,15 @@
       grouper = function(){};
       window.grouper = grouper;
       grouper.elm_in = function(arr, arg$){
-        var params, requirements, ref$;
+        var params, requirements;
         params = arg$.where, requirements = arg$['with'];
         if (params == null) {
           return arr[0];
         }
-        return (ref$ = this.groups_of(arr, {
-          by: keys(
-          params),
-          'with': requirements
-        })[key]) != null ? ref$[0] : void 8;
+        return this.group_in.apply(this, arguments)[0];
       };
       grouper.group_in = function(arr, arg$){
-        var params, requirements, groups, key$;
+        var params, requirements, groups, param_keys, key$;
         params = arg$.where, requirements = arg$['with'];
         if (params == null) {
           return arr;
@@ -995,21 +991,36 @@
         })(
         values(
         params))) {
+          param_keys = keys(
+          params);
           groups[key$ = propsToStr(
-          params)] == null && (groups[key$] = filter(function(elm){
-            return all(function(it){
-              switch (isAn("array")(
-              params[it])) {
-              case true:
-                return in$(elm[it], params[it]);
-              case false:
-                return elm[it] == params[it];
-              }
-            })(
-            keys(
-            params));
+          params)] == null && (groups[key$] = concat(
+          compact(
+          map(function(it){
+            return groups[it];
           })(
-          arr));
+          map(function(it){
+            return propsToStr(
+            listsToObj(param_keys, it));
+          })(
+          map(function(it){
+            return flatten(
+            [it]);
+          })(
+          fold1(curry$(function(ys, xs){
+            return multiplyWith(ys)(
+            xs);
+          }))(
+          map(function(it){
+            if (!isAn("array")(
+            it)) {
+              return [it];
+            } else {
+              return it;
+            }
+          })(
+          values(
+          params)))))))));
         }
         return groups[key$ = propsToStr(
         params)] || (groups[key$] = []);
@@ -1165,7 +1176,7 @@
       xs);
       return rs;
     },
-    multiplyWith: curry$(function(ys, xs){
+    multiplyWith: curry$(function(xs, ys){
       return unpack(
       map(function(x){
         return map(function(y){
