@@ -1264,13 +1264,26 @@
       obj)));
     }),
     underscorize: function(str){
-      return replace(/-/, "_")(
+      return replace(/-/g, "_")(
       dasherize(
+      str));
+    },
+    tableize: function(str){
+      return pluralize(
+      underscorize(
+      str));
+    },
+    classify: function(str){
+      return capitalize(
+      camelize(
       str));
     },
     replace: curry$(function(old, new_str, str){
       return str.replace(old, new_str);
     }),
+    trim: function(str){
+      return str.replace(/\s/g, "");
+    },
     unimplemented: function(){
       var caller_names;
       caller_names = [];

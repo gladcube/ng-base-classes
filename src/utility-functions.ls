@@ -40,8 +40,11 @@ app.constant("utility-functions",
   except: (key, obj)--> obj |> obj-to-pairs |> reject ( .0 is key) |> pairs-to-obj
 
   # String
-  underscorize: (str)-> str |> dasherize |> replace /-/, "_"
+  underscorize: (str)-> str |> dasherize |> replace /-/g, "_"
+  tableize: (str)-> str |> underscorize |> pluralize
+  classify: (str)-> str |> camelize |> capitalize
   replace: (old, new_str, str)--> str.replace old, new_str
+  trim: (str)-> str.replace /\s/g, ""
   # pluralize: (str)-> str |> owl.pluralize
   # Other
   unimplemented: do ->
