@@ -21,7 +21,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
         connection.get(src, params: query_params, (res)~>
           @fetched_bools![params |> props-to-str] = yes
           instances = @instance_groups!.[params |> props-to-str] = new DataStorage (res.data |> map ~> @new it)
-          cb instances, res
+          cb? instances, res
           @fire_cbs_of "after", "fetch"
         )
     @fire_cbs_of = (timing, action)->

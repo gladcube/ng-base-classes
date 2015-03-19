@@ -729,7 +729,9 @@
                 return this$['new'](it);
               })(
               res.data));
-              cb(instances, res);
+              if (typeof cb == 'function') {
+                cb(instances, res);
+              }
               return this$.fire_cbs_of("after", "fetch");
             });
           }
