@@ -709,7 +709,7 @@
         Resource.src = function(){
           return "/" + this.plural_snake_name() + "/:id";
         };
-        Resource.fetch = function(params){
+        Resource.fetch = function(params, cb){
           var ref$, src, query_params, this$ = this;
           params == null && (params = {});
           if (all(function(it){
@@ -729,6 +729,7 @@
                 return this$['new'](it);
               })(
               res.data));
+              cb(instances, res);
               return this$.fire_cbs_of("after", "fetch");
             });
           }
@@ -1297,8 +1298,7 @@
     }(),
     traceStr: function(){
       var obj;
-      Error.captureStackTrace(obj = {}, traceStr);
-      return obj.stack;
+      return (typeof Error.captureStackTrace == 'function' && Error.captureStackTrace(obj = {}, traceStr), obj.stack) || "";
     },
     traces: function(){
       return map(function(it){

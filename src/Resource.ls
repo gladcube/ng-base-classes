@@ -14,13 +14,14 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
     @params_for_fetch = -> @_params_for_fetch ?= (@ |> unenumerate "_params_for_fetch"; [])
     @param_keys_for_fetch = -> @params_for_fetch! |> last |> keys
     @src = -> "/#{@plural_snake_name!}/:id"
-    @fetch = (params = {})->
+    @fetch = (params = {}, cb)->
       if @params_for_fetch! |> all (-> not it `equals` params)
         @params_for_fetch!.push params
         {src, params: query_params} = src_and_params_from @src!, params
         connection.get(src, params: query_params, (res)~>
           @fetched_bools![params |> props-to-str] = yes
           instances = @instance_groups!.[params |> props-to-str] = new DataStorage (res.data |> map ~> @new it)
+          cb instances, res
           @fire_cbs_of "after", "fetch"
         )
     @fire_cbs_of = (timing, action)->
