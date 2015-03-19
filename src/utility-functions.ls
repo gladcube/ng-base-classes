@@ -50,7 +50,10 @@ app.constant("utility-functions",
   unimplemented: do ->
     caller_names = []
     -> if (name = traces!.2) not in caller_names then caller_names.push name; console.warn "#name is unimplemented."
-  trace-str: -> (Error.capture-stack-trace? obj = {}, trace-str; obj.stack) or ""
+  trace-str: ->
+    if Error.capture-stack-trace? 
+      that(obj = {}, trace-str); obj.stack
+    else ""
   traces: -> trace-str!.split "\n" |> tail |> map ( .match /at\s+(\S+)/ .1)
   arrayify: -> [].slice.call it
   match-to-any: (searched_strs, word)--> searched_strs |> any ( ?.match word)

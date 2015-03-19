@@ -1299,8 +1299,13 @@
       };
     }(),
     traceStr: function(){
-      var obj;
-      return (typeof Error.captureStackTrace == 'function' && Error.captureStackTrace(obj = {}, traceStr), obj.stack) || "";
+      var that, obj;
+      if ((that = Error.captureStackTrace) != null) {
+        that(obj = {}, traceStr);
+        return obj.stack;
+      } else {
+        return "";
+      }
     },
     traces: function(){
       return map(function(it){
