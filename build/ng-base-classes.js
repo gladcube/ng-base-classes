@@ -1245,7 +1245,12 @@
     }),
     propsToStr: function(obj){
       return JSON.stringify(
-      obj);
+      pairsToObj(
+      sortBy(function(it){
+        return it[0];
+      })(
+      objToPairs(
+      obj))));
     },
     strToProps: function(str){
       return JSON.parse(

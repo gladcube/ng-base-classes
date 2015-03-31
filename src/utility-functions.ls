@@ -1,4 +1,4 @@
-app.constant("utility-functions", 
+app.constant("utility-functions",
   # Type
   is-a: (type, obj)--> obj |> is-type (type |> camelize |> capitalize)
   is-an: (type, obj)--> obj |> is-type (type |> camelize |> capitalize)
@@ -34,7 +34,7 @@ app.constant("utility-functions",
   equals: (obj, sub)--> angular.equals sub, obj
   define: Object.define-property
   unenumerate: (prop, obj)--> define obj, prop, enumerable: no, configurable: yes, writable: yes
-  props-to-str: (obj)-> obj |> JSON.stringify
+  props-to-str: (obj)-> obj |> obj-to-pairs |> sort-by ( .0) |> pairs-to-obj |> JSON.stringify
   str-to-props: (str)-> str |> JSON.parse
   props-match: (x, y)--> x |> keys |> all -> x.(it) ~= y.(it)
   except: (key, obj)--> obj |> obj-to-pairs |> reject ( .0 is key) |> pairs-to-obj
@@ -51,7 +51,7 @@ app.constant("utility-functions",
     caller_names = []
     -> if (name = traces!.2) not in caller_names then caller_names.push name; console.warn "#name is unimplemented."
   trace-str: ->
-    if Error.capture-stack-trace? 
+    if Error.capture-stack-trace?
       that(obj = {}, trace-str); obj.stack
     else ""
   traces: -> trace-str!.split "\n" |> tail |> map ( .match /at\s+(\S+)/ .1)
