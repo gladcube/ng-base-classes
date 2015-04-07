@@ -34,7 +34,9 @@ app.constant("utility-functions",
   equals: (obj, sub)--> angular.equals sub, obj
   define: Object.define-property
   unenumerate: (prop, obj)--> define obj, prop, enumerable: no, configurable: yes, writable: yes
-  props-to-str: (obj)-> obj |> obj-to-pairs |> sort-by ( .0) |> pairs-to-obj |> JSON.stringify
+  props-to-str: (obj)->
+    if obj |> is-a "object" then obj |> obj-to-pairs |> sort-by ( .0) |> pairs-to-obj |> JSON.stringify
+    else obj |> JSON.stringify
   str-to-props: (str)-> str |> JSON.parse
   props-match: (x, y)--> x |> keys |> all -> x.(it) ~= y.(it)
   except: (key, obj)--> obj |> obj-to-pairs |> reject ( .0 is key) |> pairs-to-obj
