@@ -1244,7 +1244,7 @@
       });
     }),
     propsToStr: function(obj){
-      if (isA("object")(
+      if (isAn("object")(
       obj)) {
         return JSON.stringify(
         pairsToObj(
