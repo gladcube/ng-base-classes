@@ -1244,8 +1244,19 @@
       });
     }),
     propsToStr: function(obj){
-      return JSON.stringify(
-      obj);
+      if (isAn("object")(
+      obj)) {
+        return JSON.stringify(
+        pairsToObj(
+        sortBy(function(it){
+          return it[0];
+        })(
+        objToPairs(
+        obj))));
+      } else {
+        return JSON.stringify(
+        obj);
+      }
     },
     strToProps: function(str){
       return JSON.parse(
