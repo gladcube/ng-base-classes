@@ -26,7 +26,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
         )
     @fire_cbs_of = (timing, action)->
       [@] ++ @superclasses til: "Model"
-      |> each ~> @cbs.{}[it.name].{}[timing].[][action] |> each ~> it.call @
+      |> each ~> @cbs!.{}[timing].[][action] |> each ~> it.call @
     @instance_group = (params = {})->
       if @instance_groups![str = params |> props-to-str]? then that
       else @instance_groups![str] = new DataStorage
@@ -81,4 +81,3 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
         if res.is_ok then success_cb? res else error_cb? res
       )
 ]
-

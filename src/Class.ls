@@ -10,3 +10,4 @@ app.factory "Class", ["$injector", ($injector)->
     class: -> @constructor
   window.Class = Class
 ]
+
