@@ -738,12 +738,12 @@
         };
         Resource.fire_cbs_of = function(timing, action){
           var this$ = this;
-          return each(function(){
+          return each(function(it){
             var ref$, ref1$;
             return each(function(it){
               return it.call(this$);
             })(
-            (ref$ = (ref1$ = this$.cbs())[timing] || (ref1$[timing] = {}))[action] || (ref$[action] = []));
+            (ref$ = (ref1$ = it.cbs())[timing] || (ref1$[timing] = {}))[action] || (ref$[action] = []));
           })(
           [this].concat(this.superclasses({
             til: "Model"
