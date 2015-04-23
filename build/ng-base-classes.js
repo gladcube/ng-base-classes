@@ -756,6 +756,7 @@
           params)]) != null) {
             return that;
           } else {
+            this.fetch(params);
             return this.instance_groups()[str] = new DataStorage;
           }
         };

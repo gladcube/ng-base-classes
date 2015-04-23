@@ -29,7 +29,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
       |> each ~> it.cbs!.{}[timing].[][action] |> each ~> it.call @
     @instance_group = (params = {})->
       if @instance_groups![str = params |> props-to-str]? then that
-      else @instance_groups![str] = new DataStorage
+      else @fetch params; @instance_groups![str] = new DataStorage
     @find = (params = {})->
       parts = params |> keys |> partition (~> it in @param_keys_for_fetch!)
       group_params = parts.0 |> map (-> [it, params[it]]) |> pairs-to-obj
