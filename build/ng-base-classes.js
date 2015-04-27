@@ -702,7 +702,7 @@
             this), []);
         };
         Resource.param_keys_for_fetch = function(){
-          return keys(
+          return this.keys_for_fetch || keys(
           last(
           this.params_for_fetch()));
         };
@@ -756,12 +756,11 @@
           params)]) != null) {
             return that;
           } else {
-            this.fetch(params);
             return this.instance_groups()[str] = new DataStorage;
           }
         };
         Resource.find = function(params){
-          var parts, group_params, this$ = this;
+          var parts, group_params, other_params, this$ = this;
           params == null && (params = {});
           parts = partition(function(it){
             return in$(it, this$.param_keys_for_fetch());
@@ -773,15 +772,21 @@
             return [it, params[it]];
           })(
           parts[0]));
-          params = pairsToObj(
+          other_params = pairsToObj(
           map(function(it){
             return [it, params[it]];
           })(
           parts[1]));
-          return this.instance_group(group_params).find(params);
+          if (all(function(it){
+            return !equals(it, group_params);
+          })(
+          this.params_for_fetch())) {
+            this.fetch(group_params);
+          }
+          return this.instance_group(group_params).find(other_params);
         };
         Resource.find_all = function(params){
-          var parts, group_params, this$ = this;
+          var parts, group_params, other_params, this$ = this;
           params == null && (params = {});
           parts = partition(function(it){
             return in$(it, this$.param_keys_for_fetch());
@@ -793,12 +798,18 @@
             return [it, params[it]];
           })(
           parts[0]));
-          params = pairsToObj(
+          other_params = pairsToObj(
           map(function(it){
             return [it, params[it]];
           })(
           parts[1]));
-          return this.instance_group(group_params).find_all(params);
+          if (all(function(it){
+            return !equals(it, group_params);
+          })(
+          this.params_for_fetch())) {
+            this.fetch(group_params);
+          }
+          return this.instance_group(group_params).find_all(other_params);
         };
         Resource.add = function(instance){
           var groups;

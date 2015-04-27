@@ -7,4 +7,4 @@ module.exports = (gulp, plugins)->
   gulp.task "copy:a-fujiwara", ->
     gulp
       .src "build/ng-base-classes.js"
-      .pipe gulp.dest "../sfa-ui/assets/js/dependencies"
+      .pipe gulp.dest "../gcapps/app/scripts/lib"

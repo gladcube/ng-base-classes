@@ -12,7 +12,7 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
     @fetched_bools = -> @_fetched_bools ?= (@ |> unenumerate "_fetched_bools"; {})
     @instance_groups = -> @_instance_groups ?= (@ |> unenumerate "_instance_groups"; {})
     @params_for_fetch = -> @_params_for_fetch ?= (@ |> unenumerate "_params_for_fetch"; [])
-    @param_keys_for_fetch = -> @params_for_fetch! |> last |> keys
+    @param_keys_for_fetch = -> @keys_for_fetch or (@params_for_fetch! |> last |> keys)
     @src = -> "/#{@plural_snake_name!}/:id"
     @fetch = (params = {}, cb)->
       if @params_for_fetch! |> all (-> not it `equals` params)
@@ -29,17 +29,19 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
       |> each ~> it.cbs!.{}[timing].[][action] |> each ~> it.call @
     @instance_group = (params = {})->
       if @instance_groups![str = params |> props-to-str]? then that
-      else @fetch params; @instance_groups![str] = new DataStorage
+      else @instance_groups![str] = new DataStorage
     @find = (params = {})->
       parts = params |> keys |> partition (~> it in @param_keys_for_fetch!)
       group_params = parts.0 |> map (-> [it, params[it]]) |> pairs-to-obj
-      params = parts.1 |> map (-> [it, params[it]]) |> pairs-to-obj
-      @instance_group(group_params).find params
+      other_params = parts.1 |> map (-> [it, params[it]]) |> pairs-to-obj
+      if @params_for_fetch! |> all (-> not it `equals` group_params) then @fetch group_params
+      @instance_group group_params .find other_params
     @find_all = (params = {})->
       parts = params |> keys |> partition (~> it in @param_keys_for_fetch!)
       group_params = parts.0 |> map (-> [it, params[it]]) |> pairs-to-obj
-      params = parts.1 |> map (-> [it, params[it]]) |> pairs-to-obj
-      @instance_group(group_params).find_all params
+      other_params = parts.1 |> map (-> [it, params[it]]) |> pairs-to-obj
+      if @params_for_fetch! |> all (-> not it `equals` group_params) then @fetch group_params
+      @instance_group group_params .find_all other_params
     @add = (instance)->
       (groups = @instance_groups!)
       |> keys |> filter (-> instance |> props-match (it |> str-to-props))
