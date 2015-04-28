@@ -680,6 +680,25 @@
             params))))
           };
         };
+        Resource.index_by = function(){
+          var keys, this$ = this;
+          keys = slice$.call(arguments);
+          return each(function(key){
+            this$.keys_for_index().push(key);
+            this$["instances_for_" + key] = {};
+            return this$["find_by_" + key] = function(it){
+              return this["instances_for_" + key][it];
+            };
+          })(
+          keys);
+        };
+        Resource.keys_for_index = function(){
+          var ref$;
+          return (ref$ = this._keys_for_index) != null
+            ? ref$
+            : this._keys_for_index = (unenumerate("_keys_for_index")(
+            this), []);
+        };
         Resource.fetched_bools = function(){
           var ref$;
           return (ref$ = this._fetched_bools) != null
@@ -724,11 +743,18 @@
               var instances;
               this$.fetched_bools()[propsToStr(
               params)] = true;
-              instances = this$.instance_groups()[propsToStr(
-              params)] = new DataStorage(map(function(it){
+              this$.instance_groups()[propsToStr(
+              params)] = new DataStorage(instances = map(function(it){
                 return this$['new'](it);
               })(
               res.data));
+              each(function(key){
+                return each(function(it){
+                  return this$["instances_for_" + key][it[key]] = it;
+                })(
+                instances);
+              })(
+              this$.keys_for_index());
               if (typeof cb == 'function') {
                 cb(instances, res);
               }
