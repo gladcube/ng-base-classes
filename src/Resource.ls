@@ -24,6 +24,10 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
           cb? instances, res
           @fire_cbs_of "after", "fetch"
         )
+    @refetch_all = !->
+      @params_for_fetch! |> map (-> it) |> each ~>
+        @params_for_fetch! |> remove it
+        @fetch it
     @fire_cbs_of = (timing, action)->
       [@] ++ @superclasses til: "Model"
       |> each ~> it.cbs!.{}[timing].[][action] |> each ~> it.call @

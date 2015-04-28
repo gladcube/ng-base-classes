@@ -769,6 +769,18 @@
             });
           }
         };
+        Resource.refetch_all = function(){
+          var this$ = this;
+          each(function(it){
+            remove(it)(
+            this$.params_for_fetch());
+            return this$.fetch(it);
+          })(
+          map(function(it){
+            return it;
+          })(
+          this.params_for_fetch()));
+        };
         Resource.fire_cbs_of = function(timing, action){
           var this$ = this;
           return each(function(it){
