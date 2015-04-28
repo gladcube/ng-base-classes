@@ -6,5 +6,5 @@ app.factory "BelongsToAssociation", ["Association", "ParentAssociationEntity", (
     create_methods: ->
       parent = @parent
       @me::[parent.snake_name!] ?= ->
-        parent.model subject: @ .find id: @[parent.foreign_key_name!]
+        parent.model subject: @ .find_by_id @[parent.foreign_key_name!]
   ]

@@ -12,6 +12,9 @@ app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyA
     @remove = (instance)-> @instances!.remove instance
     @after = (...action_names, cb)-> action_names |> each ~> @cbs!.after.[][it].push cb
     @before = (...action_names, cb)-> action_names |> each ~> @cbs!.before.[][it].push cb
+    @new = ->
+      super ...
+        ..fire_cbs_of "after", "new"
     @build = (props, {parent: parent_instance, by: parent_name}?)->
       @new props
         ..parent_to parent_instance, as: parent_name if parent_instance?
@@ -20,6 +23,15 @@ app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyA
       memorizer.memorize value, as: name, with: reminders, in: @
     @memoried_ = (name, {with: reminders}?)->
       memorizer.memoried_ name, with: reminders, in: @
+    @index_by = (...keys)->
+      keys
+      |> each (key)~>
+        @keys_for_index!.push key
+        @.("instances_for_#{key}") = -> @.("_instances_for_#{key}") ?= (@ |> unenumerate "_instances_for_#{key}"; {})
+        @.("find_by_#{key}") = -> @.("instances_for_#{key}")!.(it)
+        @after "new", -> @class!.("instances_for_#{key}")!.(@.(key)) = @
+    @keys_for_index = -> @_keys_for_index ?= (@ |> unenumerate "_keys_for_index"; <[id]>)
+    @index_by "id"
     fire_cbs_of: (timing, action)->
       [@class!] ++ @class!.superclasses til: "Model"
       |> map ( .cbs!)

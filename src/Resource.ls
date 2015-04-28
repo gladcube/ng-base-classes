@@ -9,13 +9,6 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
       params: params |> keys |> reject ( in required_keys) |> map (-> [it, params[it]]) |> pairs-to-obj
 
     # Class Methods
-    @index_by = (...keys)->
-      keys
-      |> each (key)~>
-        @keys_for_index!.push key
-        @.("instances_for_#{key}") = {}
-        @.("find_by_#{key}") = -> @.("instances_for_#{key}").(it)
-    @keys_for_index = -> @_keys_for_index ?= (@ |> unenumerate "_keys_for_index"; [])
     @fetched_bools = -> @_fetched_bools ?= (@ |> unenumerate "_fetched_bools"; {})
     @instance_groups = -> @_instance_groups ?= (@ |> unenumerate "_instance_groups"; {})
     @params_for_fetch = -> @_params_for_fetch ?= (@ |> unenumerate "_params_for_fetch"; [])
@@ -28,7 +21,6 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
         connection.get(src, params: query_params, (res)~>
           @fetched_bools![params |> props-to-str] = yes
           @instance_groups!.[params |> props-to-str] = new DataStorage (instances = res.data |> map ~> @new it)
-          @keys_for_index! |> each (key)~> instances |> each ~> @.("instances_for_#{key}").(it.(key)) = it
           cb? instances, res
           @fire_cbs_of "after", "fetch"
         )

@@ -82,9 +82,7 @@
             : ref$[key$] = function(){
               return parent.model({
                 subject: this
-              }).find({
-                id: this[parent.foreign_key_name()]
-              });
+              }).find_by_id(this[parent.foreign_key_name()]);
             };
         };
         return BelongsToAssociation;
@@ -413,6 +411,12 @@
           })(
           action_names);
         };
+        Model['new'] = function(){
+          var x$;
+          x$ = superclass['new'].apply(this, arguments);
+          x$.fire_cbs_of("after", "new");
+          return x$;
+        };
         Model.build = function(props, arg$){
           var parent_instance, parent_name, x$;
           if (arg$ != null) {
@@ -448,6 +452,35 @@
             'in': this
           });
         };
+        Model.index_by = function(){
+          var keys, this$ = this;
+          keys = slice$.call(arguments);
+          return each(function(key){
+            this$.keys_for_index().push(key);
+            this$["instances_for_" + key] = function(){
+              var key$, ref$;
+              return (ref$ = this[key$ = "_instances_for_" + key]) != null
+                ? ref$
+                : this[key$] = (unenumerate("_instances_for_" + key)(
+                this), {});
+            };
+            this$["find_by_" + key] = function(it){
+              return this["instances_for_" + key]()[it];
+            };
+            return this$.after("new", function(){
+              return this['class']()["instances_for_" + key]()[this[key]] = this;
+            });
+          })(
+          keys);
+        };
+        Model.keys_for_index = function(){
+          var ref$;
+          return (ref$ = this._keys_for_index) != null
+            ? ref$
+            : this._keys_for_index = (unenumerate("_keys_for_index")(
+            this), ['id']);
+        };
+        Model.index_by("id");
         prototype.fire_cbs_of = function(timing, action){
           var this$ = this;
           return each(function(it){
@@ -680,25 +713,6 @@
             params))))
           };
         };
-        Resource.index_by = function(){
-          var keys, this$ = this;
-          keys = slice$.call(arguments);
-          return each(function(key){
-            this$.keys_for_index().push(key);
-            this$["instances_for_" + key] = {};
-            return this$["find_by_" + key] = function(it){
-              return this["instances_for_" + key][it];
-            };
-          })(
-          keys);
-        };
-        Resource.keys_for_index = function(){
-          var ref$;
-          return (ref$ = this._keys_for_index) != null
-            ? ref$
-            : this._keys_for_index = (unenumerate("_keys_for_index")(
-            this), []);
-        };
         Resource.fetched_bools = function(){
           var ref$;
           return (ref$ = this._fetched_bools) != null
@@ -748,13 +762,6 @@
                 return this$['new'](it);
               })(
               res.data));
-              each(function(key){
-                return each(function(it){
-                  return this$["instances_for_" + key][it[key]] = it;
-                })(
-                instances);
-              })(
-              this$.keys_for_index());
               if (typeof cb == 'function') {
                 cb(instances, res);
               }
