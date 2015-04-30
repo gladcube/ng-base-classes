@@ -467,7 +467,7 @@
             this$["find_by_" + key] = function(it){
               return this["instances_for_" + key]()[it];
             };
-            return this$.after("new", function(){
+            return this$.after("new", "persistence", function(){
               return this['class']()["instances_for_" + key]()[this[key]] = this;
             });
           })(

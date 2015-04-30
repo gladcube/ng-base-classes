@@ -29,7 +29,7 @@ app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyA
         @keys_for_index!.push key
         @.("instances_for_#{key}") = -> @.("_instances_for_#{key}") ?= (@ |> unenumerate "_instances_for_#{key}"; {})
         @.("find_by_#{key}") = -> @.("instances_for_#{key}")!.(it)
-        @after "new", -> @class!.("instances_for_#{key}")!.(@.(key)) = @
+        @after "new", "persistence", -> @class!.("instances_for_#{key}")!.(@.(key)) = @
     @keys_for_index = -> @_keys_for_index ?= (@ |> unenumerate "_keys_for_index"; <[id]>)
     @index_by "id"
     fire_cbs_of: (timing, action)->
