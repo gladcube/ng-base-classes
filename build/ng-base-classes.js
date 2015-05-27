@@ -331,8 +331,68 @@
       }(Association));
     }
   ]);
+  app.factory("HasOneAssociation", [
+    "Association", "ChildAssociationEntity", function(Association, ChildAssociationEntity){
+      var HasOneAssociation;
+      return HasOneAssociation = (function(superclass){
+        var prototype = extend$((import$(HasOneAssociation, superclass).displayName = 'HasOneAssociation', HasOneAssociation), superclass).prototype, constructor = HasOneAssociation;
+        function HasOneAssociation(arg$){
+          var child;
+          this.me = arg$.me, child = arg$.child, this.strong = arg$.strong;
+          this.child = ChildAssociationEntity['new'](child);
+          this.create_methods();
+          if (this.strong) {
+            this.register_cbs();
+          }
+        }
+        prototype.create_methods = function(){
+          this.create_get_method();
+          return this.create_build_method();
+        };
+        prototype.create_get_method = function(){
+          var child, ref$, key$, ref1$;
+          child = this.child;
+          return (ref1$ = (ref$ = this.me.prototype)[key$ = child.snake_name()]) != null
+            ? ref1$
+            : ref$[key$] = function(params){
+              params == null && (params = {});
+              params = (params[child.foreign_key_name()] = this.id, params);
+              if (child.parent_alias != null) {
+                params[child.foreign_type_name()] = this['class']().name;
+              }
+              return child.model().find(params);
+            };
+        };
+        prototype.create_build_method = function(){
+          var child;
+          child = this.child;
+          return this.me.prototype["new_" + child.snake_name()] = function(props){
+            return child.model().build(props, {
+              parent: this,
+              by: child.parent_alias
+            });
+          };
+        };
+        prototype.register_cbs = function(){
+          var me, child;
+          me = this.me;
+          child = this.child;
+          return this.me.after("persistence", function(it){
+            var new_children, results$ = [];
+            while ((new_children = me.prototype[child.plural_snake_name()]()).length > 0) {
+              it = new_children.pop();
+              it[me.snake_name() + "_id"] = this.id;
+              results$.push(it.persist());
+            }
+            return results$;
+          });
+        };
+        return HasOneAssociation;
+      }(Association));
+    }
+  ]);
   app.factory("Model", [
-    "Entity", "DataStorage", "BelongsToAssociation", "HasManyAssociation", "memorizer", function(Entity, DataStorage, BelongsToAssociation, HasManyAssociation, memorizer){
+    "Entity", "DataStorage", "BelongsToAssociation", "HasManyAssociation", "HasOneAssociation", "memorizer", function(Entity, DataStorage, BelongsToAssociation, HasManyAssociation, HasOneAssociation, memorizer){
       var Model;
       Model = (function(superclass){
         var prototype = extend$((import$(Model, superclass).displayName = 'Model', Model), superclass).prototype, constructor = Model;
@@ -371,6 +431,22 @@
             class_name = options.class_name, parent_alias = options.as, mediator_name = options.through, foreign_key = options.foreign_key, strong = options.strongly;
           }
           return (this.associations || (this.associations = [])).push(HasManyAssociation['new']({
+            me: this,
+            strong: strong,
+            child: import$({
+              name: name,
+              parent_name: this.name,
+              parent_alias: parent_alias,
+              mediator_name: mediator_name
+            }, options)
+          }));
+        };
+        Model.has_one = function(name, options){
+          var class_name, parent_alias, mediator_name, foreign_key, strong;
+          if (options != null) {
+            class_name = options.class_name, parent_alias = options.as, mediator_name = options.through, foreign_key = options.foreign_key, strong = options.strongly;
+          }
+          return (this.associations || (this.associations = [])).push(HasOneAssociation['new']({
             me: this,
             strong: strong,
             child: import$({

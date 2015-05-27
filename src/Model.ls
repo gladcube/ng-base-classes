@@ -1,4 +1,4 @@
-app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyAssociation", "memorizer", (Entity, DataStorage, BelongsToAssociation, HasManyAssociation, memorizer)->
+app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyAssociation", "HasOneAssociation", "memorizer", (Entity, DataStorage, BelongsToAssociation, HasManyAssociation, HasOneAssociation, memorizer)->
   class Model extends Entity
     @instances = -> @_instances ?= (@ |> unenumerate "_instances";  new DataStorage)
     @cbs = -> @_cbs ?= (@ |> unenumerate "_cbs";  after: {}, before: {})
@@ -6,6 +6,8 @@ app.factory "Model", ["Entity", "DataStorage", "BelongsToAssociation", "HasManyA
       @[]associations.push BelongsToAssociation.new me: @, parent: (name: name) <<< options
     @has_many = (name, {class_name, as: parent_alias, through: mediator_name, foreign_key, strongly: strong}:options?)->
       @[]associations.push HasManyAssociation.new me: @, strong: strong, child: (name: name, parent_name: @name, parent_alias: parent_alias, mediator_name: mediator_name) <<< options
+    @has_one = (name, {class_name, as: parent_alias, through: mediator_name, foreign_key, strongly: strong}:options?)->
+      @[]associations.push HasOneAssociation.new me: @, strong: strong, child: (name: name, parent_name: @name, parent_alias: parent_alias, mediator_name: mediator_name) <<< options
     @find = (params)-> @instances!.find params
     @find_all = (params)-> @instances!.find_all params
     @add = (instance)-> @instances!.add instance
