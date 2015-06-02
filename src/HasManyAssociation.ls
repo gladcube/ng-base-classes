@@ -9,7 +9,7 @@ app.factory "HasManyAssociation", ["Association", "ChildAssociationEntity", (Ass
       @create_build_method!
     create_get_method: ->
       child = @child
-      @me::[child.plural_snake_name!] ?= (params = {})->
+      @me::[child.plural_snake_name!] = (params = {})->
         params = params <<< (child.foreign_key_name!): @id
         if child.parent_alias? then params.(child.foreign_type_name!) = @class!.name
         child.model!.find_all params
