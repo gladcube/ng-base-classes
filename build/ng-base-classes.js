@@ -290,18 +290,16 @@
           return this.create_build_method();
         };
         prototype.create_get_method = function(){
-          var child, ref$, key$, ref1$;
+          var child;
           child = this.child;
-          return (ref1$ = (ref$ = this.me.prototype)[key$ = child.plural_snake_name()]) != null
-            ? ref1$
-            : ref$[key$] = function(params){
-              params == null && (params = {});
-              params = (params[child.foreign_key_name()] = this.id, params);
-              if (child.parent_alias != null) {
-                params[child.foreign_type_name()] = this['class']().name;
-              }
-              return child.model().find_all(params);
-            };
+          return this.me.prototype[child.plural_snake_name()] = function(params){
+            params == null && (params = {});
+            params = (params[child.foreign_key_name()] = this.id, params);
+            if (child.parent_alias != null) {
+              params[child.foreign_type_name()] = this['class']().name;
+            }
+            return child.model().find_all(params);
+          };
         };
         prototype.create_build_method = function(){
           var child;
