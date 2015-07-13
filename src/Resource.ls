@@ -14,16 +14,17 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
     @params_for_fetch = -> @_params_for_fetch ?= (@ |> unenumerate "_params_for_fetch"; [])
     @param_keys_for_fetch = -> @keys_for_fetch or (@params_for_fetch! |> last |> keys)
     @src = -> "/#{@plural_snake_name!}/:id"
-    @fetch = (params = {}, cb)->
+    @fetch = (params = {}, success_cb, error_cb)->
       if @params_for_fetch! |> all (-> not it `equals` params)
         @params_for_fetch!.push params
         {src, params: query_params} = src_and_params_from @src!, params
-        connection.get(src, params: query_params, (res)~>
-          @fetched_bools![params |> props-to-str] = yes
-          @instance_groups!.[params |> props-to-str] = new DataStorage (instances = res.data |> map ~> @new it)
-          cb? instances, res
-          @fire_cbs_of "after", "fetch"
-        )
+        connection.get src, params: query_params,
+          (res)~>
+            @fetched_bools![params |> props-to-str] = yes
+            @instance_groups!.[params |> props-to-str] = new DataStorage (instances = res.data |> map ~> @new it)
+            success_cb? instances, res
+            @fire_cbs_of "after", "fetch"
+          (res)-> error_cb? res
     @refetch_all = !->
       @params_for_fetch! |> map (-> it) |> each ~>
         @params_for_fetch! |> remove it
@@ -65,25 +66,28 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
     src: -> @_src ?= (src_and_params_from @class!.src!, {}, @ .src)
     persist: (success_cb, error_cb)->
       @fire_cbs_of "before", "persistence"
-      connection.post(@src!, @data!, (res)~>
-        @ <<< res.data
-        @participate!
-        @fire_cbs_of "after", "persistence"
-        if res.is_ok then success_cb? res else error_cb? res
-      )
+      connection.post @src!, @data!,
+        (res)~>
+          @ <<< res.data
+          @participate!
+          @fire_cbs_of "after", "persistence"
+          success_cb? res
+        (res)-> error_cb? res
     update: (success_cb, error_cb)->
       @fire_cbs_of "before", "update"
       if @is_dirty!
-        connection.put(@src!, @data!, (res)~>
-          @fire_cbs_of "after", "update"
-          if res.is_ok then success_cb? res else error_cb? res
-        )
+        connection.put @src!, @data!,
+          (res)~>
+            @fire_cbs_of "after", "update"
+            success_cb? res
+          (res)-> error_cb? res
       else @fire_cbs_of "after", "update"; success_cb?!
     delete: (success_cb, error_cb)->
       @fire_cbs_of "before", "delete"
-      connection.delete(@src!, (res)~>
-        @secede!
-        @fire_cbs_of "after", "delete"
-        if res.is_ok then success_cb? res else error_cb? res
-      )
+      connection.delete @src!,
+        (res)~>
+          @secede!
+          @fire_cbs_of "after", "delete"
+          success_cb? res
+        (res)-> error_cb? res
 ]

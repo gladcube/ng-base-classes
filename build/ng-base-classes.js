@@ -816,7 +816,7 @@
         Resource.src = function(){
           return "/" + this.plural_snake_name() + "/:id";
         };
-        Resource.fetch = function(params, cb){
+        Resource.fetch = function(params, success_cb, error_cb){
           var ref$, src, query_params, this$ = this;
           params == null && (params = {});
           if (all(function(it){
@@ -836,10 +836,12 @@
                 return this$['new'](it);
               })(
               res.data));
-              if (typeof cb == 'function') {
-                cb(instances, res);
+              if (typeof success_cb == 'function') {
+                success_cb(instances, res);
               }
               return this$.fire_cbs_of("after", "fetch");
+            }, function(res){
+              return typeof error_cb == 'function' ? error_cb(res) : void 8;
             });
           }
         };
@@ -982,11 +984,9 @@
             import$(this$, res.data);
             this$.participate();
             this$.fire_cbs_of("after", "persistence");
-            if (res.is_ok) {
-              return typeof success_cb == 'function' ? success_cb(res) : void 8;
-            } else {
-              return typeof error_cb == 'function' ? error_cb(res) : void 8;
-            }
+            return typeof success_cb == 'function' ? success_cb(res) : void 8;
+          }, function(res){
+            return typeof error_cb == 'function' ? error_cb(res) : void 8;
           });
         };
         prototype.update = function(success_cb, error_cb){
@@ -995,11 +995,9 @@
           if (this.is_dirty()) {
             return connection.put(this.src(), this.data(), function(res){
               this$.fire_cbs_of("after", "update");
-              if (res.is_ok) {
-                return typeof success_cb == 'function' ? success_cb(res) : void 8;
-              } else {
-                return typeof error_cb == 'function' ? error_cb(res) : void 8;
-              }
+              return typeof success_cb == 'function' ? success_cb(res) : void 8;
+            }, function(res){
+              return typeof error_cb == 'function' ? error_cb(res) : void 8;
             });
           } else {
             this.fire_cbs_of("after", "update");
@@ -1012,11 +1010,9 @@
           return connection['delete'](this.src(), function(res){
             this$.secede();
             this$.fire_cbs_of("after", "delete");
-            if (res.is_ok) {
-              return typeof success_cb == 'function' ? success_cb(res) : void 8;
-            } else {
-              return typeof error_cb == 'function' ? error_cb(res) : void 8;
-            }
+            return typeof success_cb == 'function' ? success_cb(res) : void 8;
+          }, function(res){
+            return typeof error_cb == 'function' ? error_cb(res) : void 8;
           });
         };
         function Resource(){
@@ -1035,57 +1031,81 @@
         switch (this.type) {
         case "$http":
           return {
-            get: function(url, options, cb){
+            get: function(url, options, success_cb, error_cb){
               if (isA("function")(
               arguments[1])) {
-                url = arguments[0], cb = arguments[1];
+                url = arguments[0], success_cb = arguments[1], error_cb = arguments[2];
                 options = {};
               }
               return $http.get(url, options).then(function(it){
-                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+                return typeof success_cb == 'function' ? success_cb(it) : void 8;
+              }, function(it){
+                return typeof error_cb == 'function' ? error_cb(it) : void 8;
               });
             },
-            post: function(url, data, cb){
+            post: function(url, data, success_cb, error_cb){
               return $http.post(url, data).then(function(it){
-                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+                return typeof success_cb == 'function' ? success_cb(it) : void 8;
+              }, function(it){
+                return typeof error_cb == 'function' ? error_cb(it) : void 8;
               });
             },
-            put: function(url, data, cb){
+            put: function(url, data, success_cb, error_cb){
               return $http.put(url, data).then(function(it){
-                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+                return typeof success_cb == 'function' ? success_cb(it) : void 8;
+              }, function(it){
+                return typeof error_cb == 'function' ? error_cb(it) : void 8;
               });
             },
-            'delete': function(url, cb){
+            'delete': function(url, success_cb, error_cb){
               return $http['delete'](url).then(function(it){
-                return typeof cb == 'function' ? cb((it.is_ok = it.status === 200, it)) : void 8;
+                return typeof success_cb == 'function' ? success_cb(it) : void 8;
+              }, function(it){
+                return typeof error_cb == 'function' ? error_cb(it) : void 8;
               });
             }
           };
         case "sailsSocket":
           return {
-            get: function(url, options, cb){
+            get: function(url, options, success_cb, error_cb){
               if (isA("function")(
               arguments[1])) {
-                url = arguments[0], cb = arguments[1];
+                url = arguments[0], success_cb = arguments[1], error_cb = arguments[2];
                 options = {};
               }
               return sailsSocket.get(url, options.params, function(data, res){
-                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+                if (res.statusCode === 200) {
+                  return $rootScope.$apply(typeof success_cb == 'function' ? success_cb((res.data = data, res)) : void 8);
+                } else {
+                  return $rootScope.$apply(typeof error_cb == 'function' ? error_cb((res.data = data, res)) : void 8);
+                }
               });
             },
-            post: function(url, data, cb){
+            post: function(url, data, success_cb, error_cb){
               return sailsSocket.post(url, data, function(data, res){
-                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+                if (res.statusCode === 200) {
+                  return $rootScope.$apply(typeof success_cb == 'function' ? success_cb((res.data = data, res)) : void 8);
+                } else {
+                  return $rootScope.$apply(typeof error_cb == 'function' ? error_cb((res.data = data, res)) : void 8);
+                }
               });
             },
-            put: function(url, data, cb){
+            put: function(url, data, success_cb, error_cb){
               return sailsSocket.put(url, data, function(data, res){
-                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+                if (res.statusCode === 200) {
+                  return $rootScope.$apply(typeof success_cb == 'function' ? success_cb((res.data = data, res)) : void 8);
+                } else {
+                  return $rootScope.$apply(typeof error_cb == 'function' ? error_cb((res.data = data, res)) : void 8);
+                }
               });
             },
-            'delete': function(url, cb){
+            'delete': function(url, success_cb, error_cb){
               return sailsSocket['delete'](url, function(data, res){
-                return $rootScope.$apply(typeof cb == 'function' ? cb((res.is_ok = res.statusCode === 200, res.data = data, res)) : void 8);
+                if (res.statusCode === 200) {
+                  return $rootScope.$apply(typeof success_cb == 'function' ? success_cb((res.data = data, res)) : void 8);
+                } else {
+                  return $rootScope.$apply(typeof error_cb == 'function' ? error_cb((res.data = data, res)) : void 8);
+                }
               });
             }
           };
