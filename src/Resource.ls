@@ -25,6 +25,11 @@ app.factory "Resource", ["connection", "AppModel", "DataStorage", "utility-funct
             success_cb? instances, res
             @fire_cbs_of "after", "fetch"
           (res)-> error_cb? res
+    @refetch = (params = {}, success_cb, error_cb)->
+      if @params_for_fetch! |> find (-> it `equals` params)
+        @params_for_fetch! |> remove that
+        @fetched_bools![params |> props-to-str] = no
+        @fetch ...
     @refetch_all = !->
       @params_for_fetch! |> map (-> it) |> each ~>
         @params_for_fetch! |> remove it
