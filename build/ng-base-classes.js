@@ -845,6 +845,20 @@
             });
           }
         };
+        Resource.refetch = function(params, success_cb, error_cb){
+          var that;
+          params == null && (params = {});
+          if (that = find(function(it){
+            return equals(it, params);
+          })(
+          this.params_for_fetch())) {
+            remove(that)(
+            this.params_for_fetch());
+            this.fetched_bools()[propsToStr(
+            params)] = false;
+            return this.fetch.apply(this, arguments);
+          }
+        };
         Resource.refetch_all = function(){
           var this$ = this;
           each(function(it){
